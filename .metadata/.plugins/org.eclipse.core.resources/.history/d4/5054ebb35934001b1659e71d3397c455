@@ -1,0 +1,91 @@
+package com.cts.cartservice.dao;
+
+import java.util.ArrayList;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cognizant.cartservice.exception.CartNotFoundException;
+import com.cognizant.cartservice.exception.SweetItemNotFoundException;
+import com.cognizant.cartservice.model.Cart;
+import com.cognizant.cartservice.model.SweetItem;
+import com.cognizant.cartservice.repository.CartRepository;
+import com.cognizant.exchangeserviceproxy.SweetItemExchangeServiceProxy;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class CartDaoImpl implements CartDao {
+
+	@Autowired
+	SweetItemExchangeServiceProxy proxyService;
+
+	@Autowired
+	CartRepository cartRepository;
+
+	@Override
+	public void addCartItem(int userId, int sweetItemId) throws SweetItemNotFoundException {
+		log.debug("START");
+		
+		
+		log.debug("before proxy");
+		SweetItem item = proxyService.findSweetItemById(sweetItemId);
+		if (item==null) {
+			throw new SweetItemNotFoundException();
+		}
+		log.debug("after proxy");
+		Cart cart = new Cart();
+		cart.setItem_id(sweetItemId);
+		cart.setUser_id(userId);
+		cartRepository.save(cart);
+		log.debug("END");
+	}
+
+	@Override
+	public ArrayList<SweetItem> getAllCartItems(int userId)throws CartNotFoundException{
+		log.debug("START");
+		//log.debug(""+cartRepository.findUserIdCount(userId));
+//		if (cartRepository.findUserIdCount(userId) == 0) {
+//			return null;
+//		}
+
+		ArrayList<Cart> cartList = cartRepository.findByUserId(userId);
+		ArrayList<SweetItem> sweetItemList = new ArrayList<>();
+		log.debug(Integer.toString(sweetItemList.size()));
+		log.debug(sweetItemList.toString());
+		if (cartList != null) {
+			for (Cart cart : cartList) {
+				log.debug(""+proxyService.findSweetItemById(cart.getItem_id()));
+				SweetItem sweetItem = proxyService.findSweetItemById(cart.getItem_id());
+				sweetItemList.add(sweetItem);
+			}
+			
+		}
+		else
+		{
+			throw new CartNotFoundException();
+		}
+		log.debug("task executed.");
+		return sweetItemList;
+	}
+
+	@Override
+	public void deleteCartItem(int userId, int sweetItemId) throws SweetItemNotFoundException{
+		log.debug("START");
+		SweetItem sweetItem = proxyService.findSweetItemById(sweetItemId);
+		ArrayList<Cart> cartList = cartRepository.findByUserId(userId);
+		Cart delCart = null;
+		for (Cart cart : cartList) {
+			if (cart.getItem_id() == sweetItemId) {
+				delCart = cart;
+			}
+
+			if (delCart != null) {
+				log.debug("deleting: " + sweetItem.toString());
+				cartRepository.delete(delCart);
+			}
+		}
+	}
+
+}

@@ -1,0 +1,92 @@
+package com.cts.cartservice.controller;
+
+import java.util.ArrayList;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cognizant.cartservice.exception.CartNotFoundException;
+import com.cognizant.cartservice.exception.SweetItemNotFoundException;
+import com.cognizant.cartservice.model.SweetItem;
+import com.cognizant.cartservice.service.CartServiceImpl;
+
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@RequestMapping("/carts")
+@Slf4j
+public class CartController {
+
+	@Autowired
+	private CartServiceImpl cartServiceImpl;
+
+	// Adds given item to given users cart.
+	@PostMapping("/{userId}/{sweetItemId}")
+	@HystrixCommand(fallbackMethod = "fallbackaddCartItem")
+	public String addCartItem(@PathVariable("userId") int userId, @PathVariable("sweetItemId") int sweetItemId)
+			throws SweetItemNotFoundException {
+		log.info("START");
+		cartServiceImpl.addCartItem(userId, sweetItemId);
+
+		log.info("END");
+		return "SweetItem added successfully in Cart";
+	}
+
+	public String fallbackaddCartItem(@PathVariable("userId") int userId,
+			@PathVariable("sweetItemId") int sweetItemId) {
+
+		return "SweetItem Service is Down. Please contact admin";
+	}
+
+	// fetch all the cart items of existing users
+	@GetMapping(value = "/{userId}")
+	@HystrixCommand(fallbackMethod = "fallbackgetCartItem")
+	public ArrayList<SweetItem> getAllCartItems(@PathVariable("userId") int userId) throws CartNotFoundException {
+		log.info("START");
+
+		return cartServiceImpl.getAllCartItems(userId);
+	}
+
+	// this fallback method not working
+	public ArrayList<SweetItem> fallbackgetCartItem(@PathVariable("userId") int userId)
+			throws SweetItemNotFoundException {
+		log.info("START");
+
+		log.info("Start Fallback");
+		SweetItem sweetItem = new SweetItem();
+		sweetItem.setId(0);
+		sweetItem.setActive(false);
+		sweetItem.setDateOfLaunch(null);
+		sweetItem.setFreeDelivery(false);
+		sweetItem.setName("Default Item");
+		sweetItem.setPrice(0);
+		log.debug("SweetItem Service is Down");
+		ArrayList<SweetItem> returnList = new ArrayList<SweetItem>();
+		returnList.add(sweetItem);
+		return returnList;
+	}
+
+	// Delete item from users cart
+	@DeleteMapping("/{userId}/{sweetItemId}")
+	@HystrixCommand(fallbackMethod = "fallbackdeleteCartItem")
+	public String deleteCartItems(@PathVariable("userId") int userId, @PathVariable("sweetItemId") int sweetItemId)
+			throws SweetItemNotFoundException {
+		log.debug("START");
+		cartServiceImpl.deleteCartItem(userId, sweetItemId);
+		log.debug("END");
+		return "SweetItem deleted successfully from Cart";
+	}
+
+	public String fallbackdeleteCartItem(@PathVariable("userId") int userId,
+			@PathVariable("sweetItemId") int sweetItemId) throws SweetItemNotFoundException {
+		return "SweetItem Service is Down. Please contact admin";
+	}
+
+}

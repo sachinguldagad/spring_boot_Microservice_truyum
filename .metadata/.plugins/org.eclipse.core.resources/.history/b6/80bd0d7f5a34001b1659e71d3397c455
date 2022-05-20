@@ -1,0 +1,26 @@
+package com.cts.cartservice.model;
+
+import java.sql.Date;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
+@Data
+@Slf4j
+public class MenuItem {
+
+	private int menuItemId;
+	private String menuItemName;
+	private String menuItemCategory;
+	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "dd/MM/yyyy")
+	private Date menuItemDateOfLaunch;
+	private float menuItemPrice;
+	private boolean menuItemActive;
+	private boolean menuItemFreeDelivery;
+}

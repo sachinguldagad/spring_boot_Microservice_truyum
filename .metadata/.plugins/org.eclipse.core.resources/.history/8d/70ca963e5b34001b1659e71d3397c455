@@ -1,0 +1,89 @@
+package com.cts.cartservice.controller;
+
+import java.util.ArrayList;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cts.cartservice.exception.CartNotFoundException;
+import com.cts.cartservice.service.CartServiceImpl;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@RequestMapping("/carts")
+@Slf4j
+public class CartController {
+
+	@Autowired
+	private CartServiceImpl cartServiceImpl;
+
+	// Adds given item to given users cart.
+	@PostMapping("/{userId}/{menuItemId}")
+	@HystrixCommand(fallbackMethod = "fallbackaddCartItem")
+	public String addCartItem(@PathVariable("userId") int userId, @PathVariable("menuItemId") int menuItemId)
+			throws menuItemNotFoundException {
+		log.info("START");
+		cartServiceImpl.addCartItem(userId, menuItemId);
+
+		log.info("END");
+		return "menuItem added successfully in Cart";
+	}
+
+	public String fallbackaddCartItem(@PathVariable("userId") int userId,
+			@PathVariable("menuItemId") int menuItemId) {
+
+		return "menuItem Service is Down. Please contact admin";
+	}
+
+	// fetch all the cart items of existing users
+	@GetMapping(value = "/{userId}")
+	@HystrixCommand(fallbackMethod = "fallbackgetCartItem")
+	public ArrayList<menuItem> getAllCartItems(@PathVariable("userId") int userId) throws CartNotFoundException {
+		log.info("START");
+
+		return cartServiceImpl.getAllCartItems(userId);
+	}
+
+	// this fallback method not working
+	public ArrayList<menuItem> fallbackgetCartItem(@PathVariable("userId") int userId)
+			throws menuItemNotFoundException {
+		log.info("START");
+
+		log.info("Start Fallback");
+		menuItem menuItem = new menuItem();
+		menuItem.setId(0);
+		menuItem.setActive(false);
+		menuItem.setDateOfLaunch(null);
+		menuItem.setFreeDelivery(false);
+		menuItem.setName("Default Item");
+		menuItem.setPrice(0);
+		log.debug("menuItem Service is Down");
+		ArrayList<menuItem> returnList = new ArrayList<menuItem>();
+		returnList.add(menuItem);
+		return returnList;
+	}
+
+	// Delete item from users cart
+	@DeleteMapping("/{userId}/{menuItemId}")
+	@HystrixCommand(fallbackMethod = "fallbackdeleteCartItem")
+	public String deleteCartItems(@PathVariable("userId") int userId, @PathVariable("menuItemId") int menuItemId)
+			throws menuItemNotFoundException {
+		log.debug("START");
+		cartServiceImpl.deleteCartItem(userId, menuItemId);
+		log.debug("END");
+		return "menuItem deleted successfully from Cart";
+	}
+
+	public String fallbackdeleteCartItem(@PathVariable("userId") int userId,
+			@PathVariable("menuItemId") int menuItemId) throws menuItemNotFoundException {
+		return "menuItem Service is Down. Please contact admin";
+	}
+
+}

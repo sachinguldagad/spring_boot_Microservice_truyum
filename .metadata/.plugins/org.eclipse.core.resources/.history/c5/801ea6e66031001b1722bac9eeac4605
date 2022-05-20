@@ -1,0 +1,13 @@
+# Server Port
+server.port=8762
+
+# Application Name 
+spring.application.name=zuul-service
+
+#To register service on Eureka Discovery Server ( Naming Server )
+eureka.client.serviceUrl.defaultZone:http://localhost:8761/api/eureka
+eureka.instance.instance-id=${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+#
+management.endpoints.web.base-path=/manage
+server.servlet.context-path=/api/zuul

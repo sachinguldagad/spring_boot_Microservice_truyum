@@ -1,0 +1,6 @@
+# Server Port
+server.port=8762
+
+# Application Name 
+spring.application.name=zuul-service
+

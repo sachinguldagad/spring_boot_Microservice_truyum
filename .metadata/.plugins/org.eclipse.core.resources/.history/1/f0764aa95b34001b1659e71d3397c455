@@ -1,0 +1,15 @@
+package com.cts.exchangeserviceproxy;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import com.cts.cartservice.model.MenuItem;
+
+@FeignClient(name = "menuitem-service")
+public interface MenuItemExchangeServiceProxy {
+
+	// to fetch sweet item from feign client
+	@GetMapping("/menu-item/customer/{sweetItemId}")
+	public MenuItem findSweetItemById(@PathVariable("sweetItemId") int sweetItemId);
+}

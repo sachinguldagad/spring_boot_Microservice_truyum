@@ -1,0 +1,14 @@
+#Server Port 
+server.port=8761
+
+#Application Name
+spring.application.name=eureka-discovery-service
+
+#Eureka should not be register for himself
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+#
+#management.endpoints.web.base-path=/manage
+#server.servlet.context-path=/api/eureka
+
